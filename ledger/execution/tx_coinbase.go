@@ -96,9 +96,9 @@ func (exec *CoinbaseTxExecutor) sanityCheck(chainID string, view *st.StoreView, 
 	var expectedRewards map[string]types.Coins
 	currentBlock := exec.consensus.GetLedger().GetCurrentBlock()
 	guardianVotes := currentBlock.GuardianVotes
-	eliteEdgeNodeVotes := currentBlock.EliteEdgeNodeVotes
-	guardianPool, eliteEdgeNodePool := RetrievePools(exec.consensus.GetLedger(), exec.chain, exec.db, tx.BlockHeight, guardianVotes, eliteEdgeNodeVotes)
-	expectedRewards = CalculateReward(exec.consensus.GetLedger(), view, validatorSet, guardianVotes, guardianPool, eliteEdgeNodeVotes, eliteEdgeNodePool)
+	// eliteEdgeNodeVotes := currentBlock.EliteEdgeNodeVotes
+	guardianPool := RetrievePools(exec.consensus.GetLedger(), exec.chain, exec.db, tx.BlockHeight, guardianVotes)
+	expectedRewards = CalculateReward(exec.consensus.GetLedger(), view, validatorSet, guardianVotes, guardianPool)
 
 	if len(expectedRewards) != len(tx.Outputs) {
 		return result.Error("Number of rewarded account is incorrect")
@@ -140,14 +140,55 @@ func (exec *CoinbaseTxExecutor) process(chainID string, view *st.StoreView, tran
 	return txHash, result.OK
 }
 
-func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Database, blockHeight uint64, guardianVotes *core.AggregatedVotes,
-	eliteEdgeNodeVotes *core.AggregatedEENVotes) (guardianPool *core.GuardianCandidatePool, eliteEdgeNodePool core.EliteEdgeNodePool) {
+// func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Database, blockHeight uint64, guardianVotes *core.AggregatedVotes,
+// 	eliteEdgeNodeVotes *core.AggregatedEENVotes) (guardianPool *core.GuardianCandidatePool, eliteEdgeNodePool core.EliteEdgeNodePool) {
+// 	guardianPool = nil
+// 	eliteEdgeNodePool = nil
+
+// 	if blockHeight < common.HeightEnableTheta2 {
+// 		guardianPool = nil
+// 		eliteEdgeNodePool = nil
+// 	} else if blockHeight < common.HeightEnableTheta3 {
+// 		if guardianVotes != nil {
+// 			guradianVoteBlock, err := chain.FindBlock(guardianVotes.Block)
+// 			if err != nil {
+// 				logger.Panic(err)
+// 			}
+// 			storeView := st.NewStoreView(guradianVoteBlock.Height, guradianVoteBlock.StateHash, db)
+// 			guardianPool = storeView.GetGuardianCandidatePool()
+// 		}
+// 	} else { // blockHeight >= common.HeightEnableTheta3
+// 		// won't reward the elite edge nodes without the guardian votes, since we need to guardian votes to confirm that
+// 		// the edge nodes vote for the correct checkpoint
+// 		if guardianVotes != nil {
+// 			guradianVoteBlock, err := chain.FindBlock(guardianVotes.Block)
+// 			if err != nil {
+// 				logger.Panic(err)
+// 			}
+// 			storeView := st.NewStoreView(guradianVoteBlock.Height, guradianVoteBlock.StateHash, db)
+// 			guardianPool = storeView.GetGuardianCandidatePool()
+
+// 			if eliteEdgeNodeVotes != nil {
+// 				if eliteEdgeNodeVotes.Block == guardianVotes.Block {
+// 					eliteEdgeNodePool = st.NewEliteEdgeNodePool(storeView, true)
+// 				} else {
+// 					logger.Warnf("Elite edge nodes vote for block %v, while guardians vote for block %v, skip rewarding the elite edge nodes",
+// 						eliteEdgeNodeVotes.Block.Hex(), guardianVotes.Block.Hex())
+// 				}
+// 			} else {
+// 				logger.Warnf("Elite edge nodes have no vote for block %v", guardianVotes.Block.Hex())
+// 			}
+// 		}
+// 	}
+
+// 	return guardianPool, eliteEdgeNodePool
+// }
+
+func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Database, blockHeight uint64, guardianVotes *core.AggregatedVotes) (guardianPool *core.GuardianCandidatePool) {
 	guardianPool = nil
-	eliteEdgeNodePool = nil
 
 	if blockHeight < common.HeightEnableTheta2 {
 		guardianPool = nil
-		eliteEdgeNodePool = nil
 	} else if blockHeight < common.HeightEnableTheta3 {
 		if guardianVotes != nil {
 			guradianVoteBlock, err := chain.FindBlock(guardianVotes.Block)
@@ -167,27 +208,45 @@ func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Data
 			}
 			storeView := st.NewStoreView(guradianVoteBlock.Height, guradianVoteBlock.StateHash, db)
 			guardianPool = storeView.GetGuardianCandidatePool()
-
-			if eliteEdgeNodeVotes != nil {
-				if eliteEdgeNodeVotes.Block == guardianVotes.Block {
-					eliteEdgeNodePool = st.NewEliteEdgeNodePool(storeView, true)
-				} else {
-					logger.Warnf("Elite edge nodes vote for block %v, while guardians vote for block %v, skip rewarding the elite edge nodes",
-						eliteEdgeNodeVotes.Block.Hex(), guardianVotes.Block.Hex())
-				}
-			} else {
-				logger.Warnf("Elite edge nodes have no vote for block %v", guardianVotes.Block.Hex())
-			}
 		}
 	}
 
-	return guardianPool, eliteEdgeNodePool
+	return guardianPool
 }
+
+// // CalculateReward calculates the block reward for each account
+// func CalculateReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet,
+// 	guardianVotes *core.AggregatedVotes, guardianPool *core.GuardianCandidatePool,
+// 	eliteEdgeNodeVotes *core.AggregatedEENVotes, eliteEdgeNodePool core.EliteEdgeNodePool) map[string]types.Coins {
+// 	accountReward := map[string]types.Coins{}
+// 	blockHeight := view.Height() + 1 // view points to the parent block
+// 	if blockHeight < common.HeightEnableValidatorReward {
+// 		grantValidatorsWithZeroReward(validatorSet, &accountReward)
+// 	} else if blockHeight < common.HeightEnableTheta2 || guardianVotes == nil || guardianPool == nil {
+// 		grantValidatorReward(ledger, view, validatorSet, &accountReward, blockHeight)
+// 	} else if blockHeight < common.HeightEnableTheta3 {
+// 		grantValidatorAndGuardianReward(ledger, view, validatorSet, guardianVotes, guardianPool, &accountReward, blockHeight)
+// 	} else { // blockHeight >= common.HeightEnableTheta3
+// 		grantValidatorAndGuardianReward(ledger, view, validatorSet, guardianVotes, guardianPool, &accountReward, blockHeight)
+// 		grantEliteEdgeNodeReward(ledger, view, guardianVotes, eliteEdgeNodeVotes, eliteEdgeNodePool, &accountReward, blockHeight)
+// 	}
+
+// 	addrs := []string{}
+// 	for addr := range accountReward {
+// 		addrs = append(addrs, addr)
+// 	}
+// 	sort.Strings(addrs)
+// 	for _, addr := range addrs {
+// 		reward := accountReward[addr]
+// 		logger.Infof("Total reward for account %v : %v", hex.EncodeToString([]byte(addr)), reward)
+// 	}
+
+// 	return accountReward
+// }
 
 // CalculateReward calculates the block reward for each account
 func CalculateReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet,
-	guardianVotes *core.AggregatedVotes, guardianPool *core.GuardianCandidatePool,
-	eliteEdgeNodeVotes *core.AggregatedEENVotes, eliteEdgeNodePool core.EliteEdgeNodePool) map[string]types.Coins {
+	guardianVotes *core.AggregatedVotes, guardianPool *core.GuardianCandidatePool) map[string]types.Coins {
 	accountReward := map[string]types.Coins{}
 	blockHeight := view.Height() + 1 // view points to the parent block
 	if blockHeight < common.HeightEnableValidatorReward {
@@ -198,7 +257,6 @@ func CalculateReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.
 		grantValidatorAndGuardianReward(ledger, view, validatorSet, guardianVotes, guardianPool, &accountReward, blockHeight)
 	} else { // blockHeight >= common.HeightEnableTheta3
 		grantValidatorAndGuardianReward(ledger, view, validatorSet, guardianVotes, guardianPool, &accountReward, blockHeight)
-		grantEliteEdgeNodeReward(ledger, view, guardianVotes, eliteEdgeNodeVotes, eliteEdgeNodePool, &accountReward, blockHeight)
 	}
 
 	addrs := []string{}
@@ -367,81 +425,81 @@ func grantValidatorAndGuardianReward(ledger core.Ledger, view *st.StoreView, val
 }
 
 // grant uptime mining rewards to active elite edge nodes (they are the tfuel stakers)
-func grantEliteEdgeNodeReward(ledger core.Ledger, view *st.StoreView, guardianVotes *core.AggregatedVotes, eliteEdgeNodeVotes *core.AggregatedEENVotes,
-	eliteEdgeNodePool core.EliteEdgeNodePool, accountReward *map[string]types.Coins, blockHeight uint64) {
-	if !common.IsCheckPointHeight(blockHeight) {
-		return
-	}
+// func grantEliteEdgeNodeReward(ledger core.Ledger, view *st.StoreView, guardianVotes *core.AggregatedVotes, eliteEdgeNodeVotes *core.AggregatedEENVotes,
+// 	eliteEdgeNodePool core.EliteEdgeNodePool, accountReward *map[string]types.Coins, blockHeight uint64) {
+// 	if !common.IsCheckPointHeight(blockHeight) {
+// 		return
+// 	}
 
-	if guardianVotes == nil {
-		// Should never reach here
-		panic("guardianVotes == nil")
-	}
+// 	if guardianVotes == nil {
+// 		// Should never reach here
+// 		panic("guardianVotes == nil")
+// 	}
 
-	logger.Debugf("grantEliteEdgeNodeReward: guardianVotes = %v, eliteEdgeNodeVotes = %v", guardianVotes, eliteEdgeNodeVotes)
+// 	logger.Debugf("grantEliteEdgeNodeReward: guardianVotes = %v, eliteEdgeNodeVotes = %v", guardianVotes, eliteEdgeNodeVotes)
 
-	if eliteEdgeNodeVotes == nil || eliteEdgeNodePool == nil {
-		return
-	}
+// 	if eliteEdgeNodeVotes == nil || eliteEdgeNodePool == nil {
+// 		return
+// 	}
 
-	effectiveStakes := [][]*core.Stake{}          // For compatiblity with old sampling algorithm, stakes from the same staker are grouped together
-	stakeGroupMap := make(map[common.Address]int) // stake source address -> index of the group in the effectiveStakes slice
+// 	effectiveStakes := [][]*core.Stake{}          // For compatiblity with old sampling algorithm, stakes from the same staker are grouped together
+// 	stakeGroupMap := make(map[common.Address]int) // stake source address -> index of the group in the effectiveStakes slice
 
-	totalEffectiveStake := new(big.Int)
-	amplifier := new(big.Int).SetUint64(1e18)
-	for _, eenAddr := range eliteEdgeNodeVotes.Addresses {
-		weight := big.NewInt(int64(eliteEdgeNodePool.RandomRewardWeight(eliteEdgeNodeVotes.Block, eenAddr)))
-		een := eliteEdgeNodePool.Get(eenAddr)
+// 	totalEffectiveStake := new(big.Int)
+// 	amplifier := new(big.Int).SetUint64(1e18)
+// 	for _, eenAddr := range eliteEdgeNodeVotes.Addresses {
+// 		weight := big.NewInt(int64(eliteEdgeNodePool.RandomRewardWeight(eliteEdgeNodeVotes.Block, eenAddr)))
+// 		een := eliteEdgeNodePool.Get(eenAddr)
 
-		eenTotalStake := een.TotalStake()
-		if eenTotalStake.Cmp(big.NewInt(0)) == 0 {
-			continue
-		}
+// 		eenTotalStake := een.TotalStake()
+// 		if eenTotalStake.Cmp(big.NewInt(0)) == 0 {
+// 			continue
+// 		}
 
-		amplifiedWeight := big.NewInt(1).Mul(amplifier, weight)
-		for _, stake := range een.Stakes {
-			if stake.Withdrawn {
-				continue
-			}
+// 		amplifiedWeight := big.NewInt(1).Mul(amplifier, weight)
+// 		for _, stake := range een.Stakes {
+// 			if stake.Withdrawn {
+// 				continue
+// 			}
 
-			// for EEN reward calculation
-			effectiveStakeAmount := big.NewInt(1)
-			effectiveStakeAmount.Mul(amplifiedWeight, stake.Amount)
-			effectiveStakeAmount.Div(effectiveStakeAmount, eenTotalStake)
+// 			// for EEN reward calculation
+// 			effectiveStakeAmount := big.NewInt(1)
+// 			effectiveStakeAmount.Mul(amplifiedWeight, stake.Amount)
+// 			effectiveStakeAmount.Div(effectiveStakeAmount, eenTotalStake)
 
-			effectiveStake := &core.Stake{
-				Holder: een.Holder,
-				Source: stake.Source,
-				Amount: effectiveStakeAmount,
-			}
-			if _, exists := stakeGroupMap[effectiveStake.Source]; !exists {
-				stakeGroupMap[effectiveStake.Source] = len(effectiveStakes)
-				effectiveStakes = append(effectiveStakes, []*core.Stake{})
-			}
-			idx := stakeGroupMap[effectiveStake.Source]
-			effectiveStakes[idx] = append(effectiveStakes[idx], effectiveStake)
+// 			effectiveStake := &core.Stake{
+// 				Holder: een.Holder,
+// 				Source: stake.Source,
+// 				Amount: effectiveStakeAmount,
+// 			}
+// 			if _, exists := stakeGroupMap[effectiveStake.Source]; !exists {
+// 				stakeGroupMap[effectiveStake.Source] = len(effectiveStakes)
+// 				effectiveStakes = append(effectiveStakes, []*core.Stake{})
+// 			}
+// 			idx := stakeGroupMap[effectiveStake.Source]
+// 			effectiveStakes[idx] = append(effectiveStakes[idx], effectiveStake)
 
-			totalEffectiveStake.Add(totalEffectiveStake, effectiveStakeAmount)
+// 			totalEffectiveStake.Add(totalEffectiveStake, effectiveStakeAmount)
 
-			logger.Debugf("grantEliteEdgeNodeReward: eenAddr = %v, eenTotalStake = %v, weight = %v, staker: %v, stake = %v, effectiveStakeAmount = %v",
-				eenAddr, eenTotalStake, weight, stake.Source, stake.Amount, effectiveStakeAmount)
-		}
-	}
+// 			logger.Debugf("grantEliteEdgeNodeReward: eenAddr = %v, eenTotalStake = %v, weight = %v, staker: %v, stake = %v, effectiveStakeAmount = %v",
+// 				eenAddr, eenTotalStake, weight, stake.Source, stake.Amount, effectiveStakeAmount)
+// 		}
+// 	}
 
-	// the source of the stake divides the block reward proportional to their stake
-	totalReward := big.NewInt(1).Mul(eenTfuelRewardPerBlock, big.NewInt(common.CheckpointInterval))
+// 	// the source of the stake divides the block reward proportional to their stake
+// 	totalReward := big.NewInt(1).Mul(eenTfuelRewardPerBlock, big.NewInt(common.CheckpointInterval))
 
-	logger.Debugf("grantEliteEdgeNodeReward: totalEffectiveStake = %v, totalReward = %v", totalEffectiveStake, totalReward)
+// 	logger.Debugf("grantEliteEdgeNodeReward: totalEffectiveStake = %v, totalReward = %v", totalEffectiveStake, totalReward)
 
-	var srdsr *st.StakeRewardDistributionRuleSet
-	if blockHeight >= common.HeightEnableTheta3 {
-		srdsr = state.NewStakeRewardDistributionRuleSet(view)
-	}
+// 	var srdsr *st.StakeRewardDistributionRuleSet
+// 	if blockHeight >= common.HeightEnableTheta3 {
+// 		srdsr = state.NewStakeRewardDistributionRuleSet(view)
+// 	}
 
-	// the source of the stake divides the block reward proportional to their stake
-	issueFixedReward(effectiveStakes, totalEffectiveStake, accountReward, totalReward, srdsr, "EEN  ")
+// 	// the source of the stake divides the block reward proportional to their stake
+// 	issueFixedReward(effectiveStakes, totalEffectiveStake, accountReward, totalReward, srdsr, "EEN  ")
 
-}
+// }
 
 func addRewardToMap(receiver common.Address, amount *big.Int, accountReward *map[string]types.Coins) {
 	rewardCoins := types.Coins{
