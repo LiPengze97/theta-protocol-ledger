@@ -94,12 +94,12 @@ func (exec *CoinbaseTxExecutor) sanityCheck(chainID string, view *st.StoreView, 
 
 	// check the reward amount
 	var expectedRewards map[string]types.Coins
-	currentBlock := exec.consensus.GetLedger().GetCurrentBlock()
-	guardianVotes := currentBlock.GuardianVotes
+	// currentBlock := exec.consensus.GetLedger().GetCurrentBlock()
+	// guardianVotes := currentBlock.GuardianVotes
 	// eliteEdgeNodeVotes := currentBlock.EliteEdgeNodeVotes
-	guardianPool := RetrievePools(exec.consensus.GetLedger(), exec.chain, exec.db, tx.BlockHeight, guardianVotes)
-	expectedRewards = CalculateReward(exec.consensus.GetLedger(), view, validatorSet, guardianVotes, guardianPool)
-
+	// guardianPool := RetrievePools(exec.consensus.GetLedger(), exec.chain, exec.db, tx.BlockHeight, guardianVotes)
+	// expectedRewards = CalculateReward(exec.consensus.GetLedger(), view, validatorSet, guardianVotes, guardianPool)
+	expectedRewards = CalculateReward(exec.consensus.GetLedger(), view, validatorSet)
 	if len(expectedRewards) != len(tx.Outputs) {
 		return result.Error("Number of rewarded account is incorrect")
 	}
@@ -245,19 +245,20 @@ func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Data
 // }
 
 // CalculateReward calculates the block reward for each account
-func CalculateReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet,
-	guardianVotes *core.AggregatedVotes, guardianPool *core.GuardianCandidatePool) map[string]types.Coins {
+func CalculateReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet) map[string]types.Coins {
 	accountReward := map[string]types.Coins{}
 	blockHeight := view.Height() + 1 // view points to the parent block
 	if blockHeight < common.HeightEnableValidatorReward {
 		grantValidatorsWithZeroReward(validatorSet, &accountReward)
-	} else if blockHeight < common.HeightEnableTheta2 || guardianVotes == nil || guardianPool == nil {
+		// } else if blockHeight < common.HeightEnableTheta2 || guardianVotes == nil || guardianPool == nil {
+	} else {
 		grantValidatorReward(ledger, view, validatorSet, &accountReward, blockHeight)
-	} else if blockHeight < common.HeightEnableTheta3 {
-		grantValidatorAndGuardianReward(ledger, view, validatorSet, guardianVotes, guardianPool, &accountReward, blockHeight)
-	} else { // blockHeight >= common.HeightEnableTheta3
-		grantValidatorAndGuardianReward(ledger, view, validatorSet, guardianVotes, guardianPool, &accountReward, blockHeight)
 	}
+	// } else if blockHeight < common.HeightEnableTheta3 {
+	// 	grantValidatorAndGuardianReward(ledger, view, validatorSet, guardianVotes, guardianPool, &accountReward, blockHeight)
+	// } else { // blockHeight >= common.HeightEnableTheta3
+	// 	grantValidatorAndGuardianReward(ledger, view, validatorSet, guardianVotes, guardianPool, &accountReward, blockHeight)
+	// }
 
 	addrs := []string{}
 	for addr := range accountReward {

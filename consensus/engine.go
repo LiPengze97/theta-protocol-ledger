@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
-	"strings"
+	// "strings"
 	"sync"
 	"time"
 
-	"github.com/thetatoken/theta/crypto/bls"
+	// "github.com/thetatoken/theta/crypto/bls"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -41,9 +41,9 @@ type ConsensusEngine struct {
 	// guardian         *GuardianEngine
 	// eliteEdgeNode    *EliteEdgeNodeEngine
 
-	incoming chan interface{}
-	// finalizedBlocks chan *core.Block
-	hasSynced bool
+	incoming        chan interface{}
+	finalizedBlocks chan *core.Block
+	hasSynced       bool
 
 	// Life cycle
 	wg      *sync.WaitGroup
@@ -70,8 +70,8 @@ func NewConsensusEngine(privateKey *crypto.PrivateKey, db store.Store, chain *bl
 
 		privateKey: privateKey,
 
-		incoming: make(chan interface{}, viper.GetInt(common.CfgConsensusMessageQueueSize)),
-		// finalizedBlocks: make(chan *core.Block, viper.GetInt(common.CfgConsensusMessageQueueSize)),
+		incoming:        make(chan interface{}, viper.GetInt(common.CfgConsensusMessageQueueSize)),
+		finalizedBlocks: make(chan *core.Block, viper.GetInt(common.CfgConsensusMessageQueueSize)),
 
 		wg: &sync.WaitGroup{},
 
@@ -87,10 +87,10 @@ func NewConsensusEngine(privateKey *crypto.PrivateKey, db store.Store, chain *bl
 	logger = util.GetLoggerForModule("consensus")
 	e.logger = logger
 
-	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privateKey.PublicKey().ToBytes())))
-	if err != nil {
-		e.logger.Panic(err)
-	}
+	// blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privateKey.PublicKey().ToBytes())))
+	// if err != nil {
+	// 	e.logger.Panic(err)
+	// }
 	// e.guardian = NewGuardianEngine(e, blsKey)
 	// e.eliteEdgeNode = NewEliteEdgeNodeEngine(e, blsKey)
 
@@ -1098,9 +1098,9 @@ func (e *ConsensusEngine) GetSummary() *StateStub {
 }
 
 // FinalizedBlocks returns a channel that will be published with finalized blocks by the engine.
-// func (e *ConsensusEngine) FinalizedBlocks() chan *core.Block {
-// 	return e.finalizedBlocks
-// }
+func (e *ConsensusEngine) FinalizedBlocks() chan *core.Block {
+	return e.finalizedBlocks
+}
 
 // GetLastFinalizedBlock returns the last finalized block.
 func (e *ConsensusEngine) GetLastFinalizedBlock() *core.ExtendedBlock {
@@ -1164,12 +1164,12 @@ func (e *ConsensusEngine) finalizeBlock(block *core.ExtendedBlock) error {
 	// 	e.resetGuardianTimer()
 	// }
 
-	// select {
-	// case e.finalizedBlocks <- block.Block:
-	// 	e.logger.Infof("Notified finalized block, height=%v", block.Height)
-	// default:
-	// 	e.logger.Warnf("Failed to notify finalized block, height=%v", block.Height)
-	// }
+	select {
+	case e.finalizedBlocks <- block.Block:
+		e.logger.Infof("Notified finalized block, height=%v", block.Height)
+	default:
+		e.logger.Warnf("Failed to notify finalized block, height=%v", block.Height)
+	}
 	return nil
 }
 
@@ -1379,12 +1379,12 @@ func (e *ConsensusEngine) State() *State {
 	return e.state
 }
 
-func (e *ConsensusEngine) resetGuardianTimer() {
-	if e.guardianTimer != nil {
-		e.guardianTimer.Stop()
-	}
-	e.guardianTimer = time.NewTicker(time.Duration(viper.GetInt(common.CfgGuardianRoundLength)) * time.Second)
-}
+// func (e *ConsensusEngine) resetGuardianTimer() {
+// 	if e.guardianTimer != nil {
+// 		e.guardianTimer.Stop()
+// 	}
+// 	e.guardianTimer = time.NewTicker(time.Duration(viper.GetInt(common.CfgGuardianRoundLength)) * time.Second)
+// }
 
 func isSyncing(lastestFinalizedBlock *core.ExtendedBlock, currentHeight uint64) bool {
 	if lastestFinalizedBlock == nil {
