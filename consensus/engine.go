@@ -38,12 +38,12 @@ type ConsensusEngine struct {
 	dispatcher       *dispatcher.Dispatcher
 	validatorManager core.ValidatorManager
 	ledger           core.Ledger
-	guardian         *GuardianEngine
+	// guardian         *GuardianEngine
 	// eliteEdgeNode    *EliteEdgeNodeEngine
 
-	incoming        chan interface{}
-	finalizedBlocks chan *core.Block
-	hasSynced       bool
+	incoming chan interface{}
+	// finalizedBlocks chan *core.Block
+	hasSynced bool
 
 	// Life cycle
 	wg      *sync.WaitGroup
@@ -51,10 +51,10 @@ type ConsensusEngine struct {
 	cancel  context.CancelFunc
 	stopped bool
 
-	mu            *sync.Mutex
-	voteTimer     *time.Timer
-	epochTimer    *time.Timer
-	guardianTimer *time.Ticker
+	mu         *sync.Mutex
+	voteTimer  *time.Timer
+	epochTimer *time.Timer
+	// guardianTimer *time.Ticker
 
 	voteTimerReady bool
 	blockProcessed bool
@@ -70,8 +70,8 @@ func NewConsensusEngine(privateKey *crypto.PrivateKey, db store.Store, chain *bl
 
 		privateKey: privateKey,
 
-		incoming:        make(chan interface{}, viper.GetInt(common.CfgConsensusMessageQueueSize)),
-		finalizedBlocks: make(chan *core.Block, viper.GetInt(common.CfgConsensusMessageQueueSize)),
+		incoming: make(chan interface{}, viper.GetInt(common.CfgConsensusMessageQueueSize)),
+		// finalizedBlocks: make(chan *core.Block, viper.GetInt(common.CfgConsensusMessageQueueSize)),
 
 		wg: &sync.WaitGroup{},
 
@@ -91,7 +91,7 @@ func NewConsensusEngine(privateKey *crypto.PrivateKey, db store.Store, chain *bl
 	if err != nil {
 		e.logger.Panic(err)
 	}
-	e.guardian = NewGuardianEngine(e, blsKey)
+	// e.guardian = NewGuardianEngine(e, blsKey)
 	// e.eliteEdgeNode = NewEliteEdgeNodeEngine(e, blsKey)
 
 	e.logger.WithFields(log.Fields{"state": e.state}).Info("Starting state")
@@ -152,8 +152,8 @@ func (e *ConsensusEngine) Start(ctx context.Context) {
 	//e.ledger.ResetState(lastCC.Height, lastCC.StateHash)
 	e.ledger.ResetState(lastCC.Block)
 
-	e.resetGuardianTimer()
-	e.guardian.Start(e.ctx)
+	// e.resetGuardianTimer()
+	// e.guardian.Start(e.ctx)
 	// e.eliteEdgeNode.Start(e.ctx)
 
 	e.checkSyncStatus()
@@ -246,9 +246,9 @@ func (e *ConsensusEngine) autoRewind(lastCC *core.ExtendedBlock) *core.ExtendedB
 func (e *ConsensusEngine) Stop() {
 	e.cancel()
 
-	if e.guardianTimer != nil {
-		e.guardianTimer.Stop()
-	}
+	// if e.guardianTimer != nil {
+	// 	e.guardianTimer.Stop()
+	// }
 }
 
 // Wait blocks until all goroutines stop.
@@ -282,14 +282,14 @@ func (e *ConsensusEngine) mainLoop() {
 				e.logger.WithFields(log.Fields{"e.epoch": e.GetEpoch()}).Debug("Epoch timeout. Repeating epoch")
 				e.vote()
 				break Epoch
-			case <-e.guardianTimer.C:
-				v := e.guardian.GetVoteToBroadcast()
+				// case <-e.guardianTimer.C:
+				// 	v := e.guardian.GetVoteToBroadcast()
 
-				if v != nil {
-					e.guardian.logger.WithFields(log.Fields{"vote": v}).Debug("Broadcasting guardian vote")
-					e.broadcastGuardianVote(v)
-				}
-				e.guardian.StartNewRound()
+				// 	if v != nil {
+				// 		e.guardian.logger.WithFields(log.Fields{"vote": v}).Debug("Broadcasting guardian vote")
+				// 		e.broadcastGuardianVote(v)
+				// 	}
+				// 	e.guardian.StartNewRound()
 
 				// eenv := e.eliteEdgeNode.GetVoteToBroadcast()
 
@@ -348,9 +348,9 @@ func (e *ConsensusEngine) processMessage(msg interface{}) (endEpoch bool) {
 			"block": m.BlockHeader,
 		}).Debug("Received block")
 		e.handleBlock(m)
-	case *core.AggregatedVotes:
-		// e.logger.WithFields(log.Fields{"guardian vote": m}).Debug("Received guardian vote")
-		e.handleGuardianVote(m)
+	// case *core.AggregatedVotes:
+	// e.logger.WithFields(log.Fields{"guardian vote": m}).Debug("Received guardian vote")
+	// e.handleGuardianVote(m)
 	// case *core.EENVote:
 	// e.logger.WithFields(log.Fields{"elite edge node vote": m}).Debug("Received elite edge node vote")
 	// e.handleEliteEdgeNodeVote(m)
@@ -508,74 +508,74 @@ func (e *ConsensusEngine) validateBlock(block *core.Block, parent *core.Extended
 
 	// Validate Guardian Votes.
 	// We allow checkpoint blocs to have nil guardian votes.
-	if block.GuardianVotes != nil && block.Height >= common.HeightEnableTheta2 && common.IsCheckPointHeight(block.Height) {
-		// Voted block must exist.
-		padding := uint64(20)
-		if e.chain.Root().Height+padding*uint64(common.CheckpointInterval) < block.Height {
-			lastCheckpoint, err := e.chain.FindBlock(block.GuardianVotes.Block)
-			if err != nil {
-				e.logger.WithFields(log.Fields{
-					"block.Hash":          block.Hash().Hex(),
-					"block.Height":        block.Height,
-					"block.GuardianVotes": block.GuardianVotes.String(),
-					"error":               err.Error(),
-				}).Warn("Guardian votes refers to non-existing block")
-				return result.Error("Block in guardian votes cannot be found")
-			}
+	// if block.GuardianVotes != nil && block.Height >= common.HeightEnableTheta2 && common.IsCheckPointHeight(block.Height) {
+	// 	// Voted block must exist.
+	// 	padding := uint64(20)
+	// 	if e.chain.Root().Height+padding*uint64(common.CheckpointInterval) < block.Height {
+	// 		lastCheckpoint, err := e.chain.FindBlock(block.GuardianVotes.Block)
+	// 		if err != nil {
+	// 			e.logger.WithFields(log.Fields{
+	// 				"block.Hash":          block.Hash().Hex(),
+	// 				"block.Height":        block.Height,
+	// 				"block.GuardianVotes": block.GuardianVotes.String(),
+	// 				"error":               err.Error(),
+	// 			}).Warn("Guardian votes refers to non-existing block")
+	// 			return result.Error("Block in guardian votes cannot be found")
+	// 		}
 
-			// // Voted block must be at previous checkpoint height.
-			// if block.Height-lastCheckpoint.Height != uint64(common.CheckpointInterval) {
-			// 	e.logger.WithFields(log.Fields{
-			// 		"block.Hash":          block.Hash().Hex(),
-			// 		"block.Height":        block.Height,
-			// 		"block.GuardianVotes": block.GuardianVotes.String(),
-			// 	}).Warn("Voted block must be at previous checkpoint height")
-			// 	return result.Error("Voted block must be at previous checkpoint height")
-			// }
-			// Voted block must be ascendant.
-			if !e.chain.IsDescendant(lastCheckpoint.Hash(), block.Hash()) {
-				e.logger.WithFields(log.Fields{
-					"block.Hash":          block.Hash().Hex(),
-					"block.Height":        block.Height,
-					"block.GuardianVotes": block.GuardianVotes.String(),
-					"lastCheckpoint":      lastCheckpoint.Hash().Hex(),
-				}).Warn("Block is not descendant of checkpoint")
-				return result.Error("Block is not descendant of checkpoint in guardian votes")
-			}
-		}
+	// 		// // Voted block must be at previous checkpoint height.
+	// 		// if block.Height-lastCheckpoint.Height != uint64(common.CheckpointInterval) {
+	// 		// 	e.logger.WithFields(log.Fields{
+	// 		// 		"block.Hash":          block.Hash().Hex(),
+	// 		// 		"block.Height":        block.Height,
+	// 		// 		"block.GuardianVotes": block.GuardianVotes.String(),
+	// 		// 	}).Warn("Voted block must be at previous checkpoint height")
+	// 		// 	return result.Error("Voted block must be at previous checkpoint height")
+	// 		// }
+	// 		// Voted block must be ascendant.
+	// 		if !e.chain.IsDescendant(lastCheckpoint.Hash(), block.Hash()) {
+	// 			e.logger.WithFields(log.Fields{
+	// 				"block.Hash":          block.Hash().Hex(),
+	// 				"block.Height":        block.Height,
+	// 				"block.GuardianVotes": block.GuardianVotes.String(),
+	// 				"lastCheckpoint":      lastCheckpoint.Hash().Hex(),
+	// 			}).Warn("Block is not descendant of checkpoint")
+	// 			return result.Error("Block is not descendant of checkpoint in guardian votes")
+	// 		}
+	// 	}
 
-		// Guardian votes must be valid.
-		gcp, err := e.ledger.GetGuardianCandidatePool(block.GuardianVotes.Block)
-		if err != nil {
-			e.logger.WithFields(log.Fields{
-				"block.Hash":          block.Hash().Hex(),
-				"block.Height":        block.Height,
-				"block.GuardianVotes": block.GuardianVotes.String(),
-				"error":               err.Error(),
-			}).Warn("Failed to load guardian pool")
-			return result.Error("Failed to load guardian pool")
-		}
-		if res := block.GuardianVotes.Validate(gcp); res.IsError() {
-			e.logger.WithFields(log.Fields{
-				"block.Hash":          block.Hash().Hex(),
-				"block.Height":        block.Height,
-				"block.GuardianVotes": block.GuardianVotes.String(),
-				"error":               res.String(),
-			}).Warn("Failed to load guardian pool")
-			return result.Error("Guardian votes are not valid")
-		}
-	} else {
-		if block.GuardianVotes != nil {
-			e.logger.WithFields(log.Fields{
-				"block.Epoch":         block.Epoch,
-				"block.proposer":      block.Proposer.Hex(),
-				"block.Hash":          block.Hash().Hex(),
-				"block.Height":        block.Height,
-				"block.GuardianVotes": block.GuardianVotes.String(),
-			}).Warn("Guardian votes in non-checkpoint block")
-			return result.Error("Non-checkpoint block should not have guardian votes")
-		}
-	}
+	// 	// Guardian votes must be valid.
+	// 	gcp, err := e.ledger.GetGuardianCandidatePool(block.GuardianVotes.Block)
+	// 	if err != nil {
+	// 		e.logger.WithFields(log.Fields{
+	// 			"block.Hash":          block.Hash().Hex(),
+	// 			"block.Height":        block.Height,
+	// 			"block.GuardianVotes": block.GuardianVotes.String(),
+	// 			"error":               err.Error(),
+	// 		}).Warn("Failed to load guardian pool")
+	// 		return result.Error("Failed to load guardian pool")
+	// 	}
+	// 	if res := block.GuardianVotes.Validate(gcp); res.IsError() {
+	// 		e.logger.WithFields(log.Fields{
+	// 			"block.Hash":          block.Hash().Hex(),
+	// 			"block.Height":        block.Height,
+	// 			"block.GuardianVotes": block.GuardianVotes.String(),
+	// 			"error":               res.String(),
+	// 		}).Warn("Failed to load guardian pool")
+	// 		return result.Error("Guardian votes are not valid")
+	// 	}
+	// } else {
+	// 	if block.GuardianVotes != nil {
+	// 		e.logger.WithFields(log.Fields{
+	// 			"block.Epoch":         block.Epoch,
+	// 			"block.proposer":      block.Proposer.Hex(),
+	// 			"block.Hash":          block.Hash().Hex(),
+	// 			"block.Height":        block.Height,
+	// 			"block.GuardianVotes": block.GuardianVotes.String(),
+	// 		}).Warn("Guardian votes in non-checkpoint block")
+	// 		return result.Error("Non-checkpoint block should not have guardian votes")
+	// 	}
+	// }
 
 	// Validate Elite Edge Node Votes.
 	// We allow checkpoint blocks to have nil elite edge node votes.
@@ -1054,22 +1054,22 @@ func (e *ConsensusEngine) GetTip(includePendingBlockingLeaf bool) *core.Extended
 	return candidate
 }
 
-func (e *ConsensusEngine) handleGuardianVote(v *core.AggregatedVotes) {
-	e.guardian.HandleVote(v)
-}
+// func (e *ConsensusEngine) handleGuardianVote(v *core.AggregatedVotes) {
+// 	e.guardian.HandleVote(v)
+// }
 
-func (e *ConsensusEngine) broadcastGuardianVote(vote *core.AggregatedVotes) {
-	payload, err := rlp.EncodeToBytes(vote)
-	if err != nil {
-		e.logger.WithFields(log.Fields{"guardian vote": vote}).Error("Failed to encode vote")
-		return
-	}
-	voteMsg := dispatcher.DataResponse{
-		ChannelID: common.ChannelIDGuardian,
-		Payload:   payload,
-	}
-	e.dispatcher.SendData([]string{}, voteMsg)
-}
+// func (e *ConsensusEngine) broadcastGuardianVote(vote *core.AggregatedVotes) {
+// 	payload, err := rlp.EncodeToBytes(vote)
+// 	if err != nil {
+// 		e.logger.WithFields(log.Fields{"guardian vote": vote}).Error("Failed to encode vote")
+// 		return
+// 	}
+// 	voteMsg := dispatcher.DataResponse{
+// 		ChannelID: common.ChannelIDGuardian,
+// 		Payload:   payload,
+// 	}
+// 	e.dispatcher.SendData([]string{}, voteMsg)
+// }
 
 // func (e *ConsensusEngine) handleEliteEdgeNodeVote(v *core.EENVote) {
 // 	e.eliteEdgeNode.HandleVote(v)
@@ -1098,9 +1098,9 @@ func (e *ConsensusEngine) GetSummary() *StateStub {
 }
 
 // FinalizedBlocks returns a channel that will be published with finalized blocks by the engine.
-func (e *ConsensusEngine) FinalizedBlocks() chan *core.Block {
-	return e.finalizedBlocks
-}
+// func (e *ConsensusEngine) FinalizedBlocks() chan *core.Block {
+// 	return e.finalizedBlocks
+// }
 
 // GetLastFinalizedBlock returns the last finalized block.
 func (e *ConsensusEngine) GetLastFinalizedBlock() *core.ExtendedBlock {
@@ -1158,18 +1158,18 @@ func (e *ConsensusEngine) finalizeBlock(block *core.ExtendedBlock) error {
 	e.chain.AddTxsToIndex(block, true)
 
 	// Guardians and Elite Edge Nodes to vote for checkpoint blocks.
-	if common.IsCheckPointHeight(block.Height) {
-		e.guardian.StartNewBlock(block.Hash())
-		// e.eliteEdgeNode.StartNewBlock(block.Hash())
-		e.resetGuardianTimer()
-	}
+	// if common.IsCheckPointHeight(block.Height) {
+	// 	e.guardian.StartNewBlock(block.Hash())
+	// 	// e.eliteEdgeNode.StartNewBlock(block.Hash())
+	// 	e.resetGuardianTimer()
+	// }
 
-	select {
-	case e.finalizedBlocks <- block.Block:
-		e.logger.Infof("Notified finalized block, height=%v", block.Height)
-	default:
-		e.logger.Warnf("Failed to notify finalized block, height=%v", block.Height)
-	}
+	// select {
+	// case e.finalizedBlocks <- block.Block:
+	// 	e.logger.Infof("Notified finalized block, height=%v", block.Height)
+	// default:
+	// 	e.logger.Warnf("Failed to notify finalized block, height=%v", block.Height)
+	// }
 	return nil
 }
 
@@ -1261,9 +1261,9 @@ func (e *ConsensusEngine) createProposal(shouldIncludeValidatorUpdateTxs bool) (
 	block.HCC.Votes = e.chain.FindVotesByHash(block.HCC.BlockHash).UniqueVoter().FilterByValidators(hccValidators)
 
 	// Add guardian votes.
-	if block.Height >= common.HeightEnableTheta2 && common.IsCheckPointHeight(block.Height) {
-		block.GuardianVotes = e.guardian.GetBestVote()
-	}
+	// if block.Height >= common.HeightEnableTheta2 && common.IsCheckPointHeight(block.Height) {
+	// 	block.GuardianVotes = e.guardian.GetBestVote()
+	// }
 
 	// Add elite edge node votes.
 	// if block.Height >= common.HeightEnableTheta3 && common.IsCheckPointHeight(block.Height) {
