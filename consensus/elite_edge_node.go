@@ -55,46 +55,46 @@ func NewEliteEdgeNodeEngine(c *ConsensusEngine, privateKey *bls.SecretKey) *Elit
 }
 
 func (e *EliteEdgeNodeEngine) StartNewBlock(block common.Hash) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
+	// e.mu.Lock()
+	// defer e.mu.Unlock()
 
-	e.block = block
-	e.nextVote = nil
-	e.currVote = nil
-	e.round = 1
+	// e.block = block
+	// e.nextVote = nil
+	// e.currVote = nil
+	// e.round = 1
 
-	eenp, err := e.engine.GetLedger().GetEliteEdgeNodePoolOfLastCheckpoint(block)
-	if err != nil {
-		// Should not happen
-		e.logger.Panic(err)
-	}
-	e.eenp = eenp
-	e.eenSampleResult, err = lru.New(sampleResultCacheSize)
-	if err != nil {
-		e.logger.Panic(err)
-	}
+	// eenp, err := e.engine.GetLedger().GetEliteEdgeNodePoolOfLastCheckpoint(block)
+	// if err != nil {
+	// 	// Should not happen
+	// 	e.logger.Panic(err)
+	// }
+	// e.eenp = eenp
+	// e.eenSampleResult, err = lru.New(sampleResultCacheSize)
+	// if err != nil {
+	// 	e.logger.Panic(err)
+	// }
 
-	e.logger.WithFields(log.Fields{
-		"block": block.Hex(),
-	}).Debug("Starting new block")
+	// e.logger.WithFields(log.Fields{
+	// 	"block": block.Hex(),
+	// }).Debug("Starting new block")
 
-	if viper.GetBool(common.CfgDebugLogSelectedEENPs) {
-		count := 0
-		total := 0
-		for _, een := range eenp.GetAll(true) {
-			total++
-			if eenp.RandomRewardWeight(block, een.Holder) > 0 {
-				count++
-				logger.Debugf("selected EEN: %v, block: %v", een.Holder, block.Hex())
-			}
-		}
+	// if viper.GetBool(common.CfgDebugLogSelectedEENPs) {
+	// 	count := 0
+	// 	total := 0
+	// 	for _, een := range eenp.GetAll(true) {
+	// 		total++
+	// 		if eenp.RandomRewardWeight(block, een.Holder) > 0 {
+	// 			count++
+	// 			logger.Debugf("selected EEN: %v, block: %v", een.Holder, block.Hex())
+	// 		}
+	// 	}
 
-		e.logger.WithFields(log.Fields{
-			"block": block.Hex(),
-			"count": count,
-			"total": total,
-		}).Debug("Selected EENs")
-	}
+	// 	e.logger.WithFields(log.Fields{
+	// 		"block": block.Hex(),
+	// 		"count": count,
+	// 		"total": total,
+	// 	}).Debug("Selected EENs")
+	// }
 }
 
 func (e *EliteEdgeNodeEngine) StartNewRound() {

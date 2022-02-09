@@ -646,7 +646,7 @@ func (ledger *Ledger) handleDelayedStateUpdates(view *st.StoreView) {
 	ledger.handleValidatorStakeReturn(view)
 	ledger.handleGuardianStakeReturn(view)
 
-	blockHeight := view.Height() + 1
+	// blockHeight := view.Height() + 1
 	// if blockHeight >= common.HeightEnableTheta3 {
 	// 	ledger.handleEliteEdgeNodeStakeReturns(view)
 	// }
