@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/thetatoken/theta/core_sidechain"
+	"github.com/thetatoken/theta/core"
 )
 
 func TestSampleEENWeight(t *testing.T) {

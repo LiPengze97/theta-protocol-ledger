@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/thetatoken/theta/common"
 	"github.com/thetatoken/theta/common/result"
-	"github.com/thetatoken/theta/ledger_sidechain/types"
+	"github.com/thetatoken/theta/ledger/types"
 )
 
 func TestGetInputs(t *testing.T) {

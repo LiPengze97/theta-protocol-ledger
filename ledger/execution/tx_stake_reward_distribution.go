@@ -6,10 +6,10 @@ import (
 
 	"github.com/thetatoken/theta/common"
 	"github.com/thetatoken/theta/common/result"
-	"github.com/thetatoken/theta/core_sidechain"
-	"github.com/thetatoken/theta/ledger_sidechain/state"
-	st "github.com/thetatoken/theta/ledger_sidechain/state"
-	"github.com/thetatoken/theta/ledger_sidechain/types"
+	"github.com/thetatoken/theta/core"
+	"github.com/thetatoken/theta/ledger/state"
+	st "github.com/thetatoken/theta/ledger/state"
+	"github.com/thetatoken/theta/ledger/types"
 )
 
 var _ TxExecutor = (*StakeRewardDistributionTxExecutor)(nil)

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	tcore "github.com/thetatoken/theta/core_sidechain"
+	tcore "github.com/thetatoken/theta/core"
 	tcrypto "github.com/thetatoken/theta/crypto"
 )
 

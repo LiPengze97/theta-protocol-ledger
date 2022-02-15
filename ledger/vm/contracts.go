@@ -25,7 +25,7 @@ import (
 	"github.com/thetatoken/theta/common/math"
 	"github.com/thetatoken/theta/crypto"
 	"github.com/thetatoken/theta/crypto/bn256"
-	"github.com/thetatoken/theta/ledger_sidechain/vm/params"
+	"github.com/thetatoken/theta/ledger/vm/params"
 	"golang.org/x/crypto/ripemd160"
 )
 

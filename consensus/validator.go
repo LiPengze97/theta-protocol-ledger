@@ -6,7 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/thetatoken/theta/common"
-	"github.com/thetatoken/theta/core_sidechain"
+	"github.com/thetatoken/theta/core"
 )
 
 const MaxValidatorCount int = 31

@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/thetatoken/theta/common/math"
-	"github.com/thetatoken/theta/ledger_sidechain/vm"
+	"github.com/thetatoken/theta/ledger/vm"
 )
 
 // Compiler contains information about the parsed source

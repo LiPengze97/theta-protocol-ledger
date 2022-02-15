@@ -13,8 +13,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/thetatoken/theta/common"
-	"github.com/thetatoken/theta/ledger_sidechain/state"
-	"github.com/thetatoken/theta/ledger_sidechain/types"
+	"github.com/thetatoken/theta/ledger/state"
+	"github.com/thetatoken/theta/ledger/types"
 	"github.com/thetatoken/theta/store/database/backend"
 )
 

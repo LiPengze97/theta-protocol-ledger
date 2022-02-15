@@ -21,7 +21,7 @@ import (
 	"sync/atomic"
 
 	"github.com/thetatoken/theta/common/math"
-	"github.com/thetatoken/theta/ledger_sidechain/vm/params"
+	"github.com/thetatoken/theta/ledger/vm/params"
 )
 
 // Config are the configuration options for the Interpreter

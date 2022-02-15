@@ -16,12 +16,12 @@ import (
 	"github.com/thetatoken/theta/blockchain"
 	"github.com/thetatoken/theta/common"
 	"github.com/thetatoken/theta/common/result"
-	"github.com/thetatoken/theta/core_sidechain"
+	"github.com/thetatoken/theta/core"
 	"github.com/thetatoken/theta/crypto"
-	exec "github.com/thetatoken/theta/ledger_sidechain/execution"
-	"github.com/thetatoken/theta/ledger_sidechain/state"
-	st "github.com/thetatoken/theta/ledger_sidechain/state"
-	"github.com/thetatoken/theta/ledger_sidechain/types"
+	exec "github.com/thetatoken/theta/ledger/execution"
+	"github.com/thetatoken/theta/ledger/state"
+	st "github.com/thetatoken/theta/ledger/state"
+	"github.com/thetatoken/theta/ledger/types"
 	mp "github.com/thetatoken/theta/mempool"
 	"github.com/thetatoken/theta/store/database"
 )
@@ -141,60 +141,60 @@ func (ledger *Ledger) GetFinalizedValidatorCandidatePool(blockHash common.Hash, 
 }
 
 // GetGuardianCandidatePool returns the guardian candidate pool of the given block.
-// func (ledger *Ledger) GetGuardianCandidatePool(blockHash common.Hash) (*core.GuardianCandidatePool, error) {
-// 	db := ledger.state.DB()
-// 	store := kvstore.NewKVStore(db)
+func (ledger *Ledger) GetGuardianCandidatePool(blockHash common.Hash) (*core.GuardianCandidatePool, error) {
+	db := ledger.state.DB()
+	store := kvstore.NewKVStore(db)
 
-// 	// Find last checkpoint and retrieve GCP.
-// 	block, err := findBlock(store, blockHash)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	blockHash = block.Hash()
-// 	for {
-// 		logger.Debugf("Ledger.GetGuardianCandidatePool, block.height = %v", block.Height)
+	// Find last checkpoint and retrieve GCP.
+	block, err := findBlock(store, blockHash)
+	if err != nil {
+		return nil, err
+	}
+	blockHash = block.Hash()
+	for {
+		logger.Debugf("Ledger.GetGuardianCandidatePool, block.height = %v", block.Height)
 
-// 		block, err := findBlock(store, blockHash)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		if common.IsCheckPointHeight(block.Height) {
-// 			stateRoot := block.BlockHeader.StateHash
-// 			storeView := st.NewStoreView(block.Height, stateRoot, db)
-// 			gcp := storeView.GetGuardianCandidatePool()
-// 			return gcp, nil
-// 		}
-// 		blockHash = block.Parent
-// 	}
-// }
+		block, err := findBlock(store, blockHash)
+		if err != nil {
+			return nil, err
+		}
+		if common.IsCheckPointHeight(block.Height) {
+			stateRoot := block.BlockHeader.StateHash
+			storeView := st.NewStoreView(block.Height, stateRoot, db)
+			gcp := storeView.GetGuardianCandidatePool()
+			return gcp, nil
+		}
+		blockHash = block.Parent
+	}
+}
 
 // GetEliteEdgeNodePoolOfLastCheckpoint returns the elite edge node pool of the given block.
-// func (ledger *Ledger) GetEliteEdgeNodePoolOfLastCheckpoint(blockHash common.Hash) (core.EliteEdgeNodePool, error) {
-// 	db := ledger.state.DB()
-// 	store := kvstore.NewKVStore(db)
+func (ledger *Ledger) GetEliteEdgeNodePoolOfLastCheckpoint(blockHash common.Hash) (core.EliteEdgeNodePool, error) {
+	db := ledger.state.DB()
+	store := kvstore.NewKVStore(db)
 
-// 	// Find last checkpoint and retrieve EENP.
-// 	block, err := findBlock(store, blockHash)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	blockHash = block.Hash()
-// 	for {
-// 		logger.Debugf("Ledger.GetEliteEdgeNodePoolOfLastCheckpoint, block.height = %v", block.Height)
+	// Find last checkpoint and retrieve EENP.
+	block, err := findBlock(store, blockHash)
+	if err != nil {
+		return nil, err
+	}
+	blockHash = block.Hash()
+	for {
+		logger.Debugf("Ledger.GetEliteEdgeNodePoolOfLastCheckpoint, block.height = %v", block.Height)
 
-// 		block, err := findBlock(store, blockHash)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		if common.IsCheckPointHeight(block.Height) {
-// 			stateRoot := block.BlockHeader.StateHash
-// 			storeView := st.NewStoreView(block.Height, stateRoot, db)
-// 			eenp := state.NewEliteEdgeNodePool(storeView, true)
-// 			return eenp, nil
-// 		}
-// 		blockHash = block.Parent
-// 	}
-// }
+		block, err := findBlock(store, blockHash)
+		if err != nil {
+			return nil, err
+		}
+		if common.IsCheckPointHeight(block.Height) {
+			stateRoot := block.BlockHeader.StateHash
+			storeView := st.NewStoreView(block.Height, stateRoot, db)
+			eenp := state.NewEliteEdgeNodePool(storeView, true)
+			return eenp, nil
+		}
+		blockHash = block.Parent
+	}
+}
 
 func findBlock(store store.Store, blockHash common.Hash) (*core.ExtendedBlock, error) {
 	var block core.ExtendedBlock
@@ -644,12 +644,12 @@ func (ledger *Ledger) shouldSkipCheckTx(tx types.Tx) bool {
 // is returned only after X blocks of its corresponding StakeWithdraw transaction
 func (ledger *Ledger) handleDelayedStateUpdates(view *st.StoreView) {
 	ledger.handleValidatorStakeReturn(view)
-	// ledger.handleGuardianStakeReturn(view)
+	ledger.handleGuardianStakeReturn(view)
 
-	// blockHeight := view.Height() + 1
-	// if blockHeight >= common.HeightEnableTheta3 {
-	// 	ledger.handleEliteEdgeNodeStakeReturns(view)
-	// }
+	blockHeight := view.Height() + 1
+	if blockHeight >= common.HeightEnableTheta3 {
+		ledger.handleEliteEdgeNodeStakeReturns(view)
+	}
 }
 
 func (ledger *Ledger) handleValidatorStakeReturn(view *st.StoreView) {
@@ -681,75 +681,75 @@ func (ledger *Ledger) handleValidatorStakeReturn(view *st.StoreView) {
 	view.UpdateValidatorCandidatePool(vcp)
 }
 
-// func (ledger *Ledger) handleGuardianStakeReturn(view *st.StoreView) {
-// 	gcp := view.GetGuardianCandidatePool()
-// 	if gcp == nil || gcp.Len() == 0 {
-// 		return
-// 	}
+func (ledger *Ledger) handleGuardianStakeReturn(view *st.StoreView) {
+	gcp := view.GetGuardianCandidatePool()
+	if gcp == nil || gcp.Len() == 0 {
+		return
+	}
 
-// 	currentHeight := view.Height()
-// 	returnedStakes := gcp.ReturnStakes(currentHeight)
+	currentHeight := view.Height()
+	returnedStakes := gcp.ReturnStakes(currentHeight)
 
-// 	for _, returnedStake := range returnedStakes {
-// 		if !returnedStake.Withdrawn || currentHeight < returnedStake.ReturnHeight {
-// 			log.Panicf("Cannot return stake: withdrawn = %v, returnHeight = %v, currentHeight = %v",
-// 				returnedStake.Withdrawn, returnedStake.ReturnHeight, currentHeight)
-// 		}
-// 		sourceAddress := returnedStake.Source
-// 		sourceAccount := view.GetAccount(sourceAddress)
-// 		if sourceAccount == nil {
-// 			log.Panicf("Failed to retrieve source account for stake return: %v", sourceAddress)
-// 		}
-// 		returnedCoins := types.Coins{
-// 			ThetaWei: returnedStake.Amount,
-// 			TFuelWei: types.Zero,
-// 		}
-// 		sourceAccount.Balance = sourceAccount.Balance.Plus(returnedCoins)
-// 		view.SetAccount(sourceAddress, sourceAccount)
-// 	}
-// 	view.UpdateGuardianCandidatePool(gcp)
-// }
+	for _, returnedStake := range returnedStakes {
+		if !returnedStake.Withdrawn || currentHeight < returnedStake.ReturnHeight {
+			log.Panicf("Cannot return stake: withdrawn = %v, returnHeight = %v, currentHeight = %v",
+				returnedStake.Withdrawn, returnedStake.ReturnHeight, currentHeight)
+		}
+		sourceAddress := returnedStake.Source
+		sourceAccount := view.GetAccount(sourceAddress)
+		if sourceAccount == nil {
+			log.Panicf("Failed to retrieve source account for stake return: %v", sourceAddress)
+		}
+		returnedCoins := types.Coins{
+			ThetaWei: returnedStake.Amount,
+			TFuelWei: types.Zero,
+		}
+		sourceAccount.Balance = sourceAccount.Balance.Plus(returnedCoins)
+		view.SetAccount(sourceAddress, sourceAccount)
+	}
+	view.UpdateGuardianCandidatePool(gcp)
+}
 
-// func (ledger *Ledger) handleEliteEdgeNodeStakeReturns(view *st.StoreView) {
-// 	currentHeight := view.Height()
-// 	returnedStakesWithHolders := view.GetEliteEdgeNodeStakeReturns(currentHeight)
-// 	if len(returnedStakesWithHolders) == 0 {
-// 		return // no need to call view.RemoveEliteEdgeNodeStakeReturns()
-// 	}
+func (ledger *Ledger) handleEliteEdgeNodeStakeReturns(view *st.StoreView) {
+	currentHeight := view.Height()
+	returnedStakesWithHolders := view.GetEliteEdgeNodeStakeReturns(currentHeight)
+	if len(returnedStakesWithHolders) == 0 {
+		return // no need to call view.RemoveEliteEdgeNodeStakeReturns()
+	}
 
-// 	eenp := state.NewEliteEdgeNodePool(view, false)
-// 	for _, returnedStakeWithHolder := range returnedStakesWithHolders {
-// 		returnedStake := returnedStakeWithHolder.Stake
-// 		eenAddress := returnedStakeWithHolder.Holder
-// 		if !returnedStake.Withdrawn || currentHeight < returnedStake.ReturnHeight {
-// 			log.Panicf("Cannot return stake: withdrawn = %v, returnHeight = %v, currentHeight = %v",
-// 				returnedStake.Withdrawn, returnedStake.ReturnHeight, currentHeight)
-// 		}
-// 		sourceAddress := returnedStake.Source
-// 		sourceAccount := view.GetAccount(sourceAddress)
-// 		if sourceAccount == nil {
-// 			log.Panicf("Failed to retrieve source account for stake return: %v", sourceAddress)
-// 		}
-// 		returnedCoins := types.Coins{ // Important: Elite edge nodes deposit/withdraw TFuel stake, NOT Theta
-// 			ThetaWei: types.Zero,
-// 			TFuelWei: returnedStake.Amount,
-// 		}
-// 		sourceAccount.Balance = sourceAccount.Balance.Plus(returnedCoins)
-// 		view.SetAccount(sourceAddress, sourceAccount)
+	eenp := state.NewEliteEdgeNodePool(view, false)
+	for _, returnedStakeWithHolder := range returnedStakesWithHolders {
+		returnedStake := returnedStakeWithHolder.Stake
+		eenAddress := returnedStakeWithHolder.Holder
+		if !returnedStake.Withdrawn || currentHeight < returnedStake.ReturnHeight {
+			log.Panicf("Cannot return stake: withdrawn = %v, returnHeight = %v, currentHeight = %v",
+				returnedStake.Withdrawn, returnedStake.ReturnHeight, currentHeight)
+		}
+		sourceAddress := returnedStake.Source
+		sourceAccount := view.GetAccount(sourceAddress)
+		if sourceAccount == nil {
+			log.Panicf("Failed to retrieve source account for stake return: %v", sourceAddress)
+		}
+		returnedCoins := types.Coins{ // Important: Elite edge nodes deposit/withdraw TFuel stake, NOT Theta
+			ThetaWei: types.Zero,
+			TFuelWei: returnedStake.Amount,
+		}
+		sourceAccount.Balance = sourceAccount.Balance.Plus(returnedCoins)
+		view.SetAccount(sourceAddress, sourceAccount)
 
-// 		// TODO: potentially O(m*n) runtime complexity, but the number of stakes on an EEN is bounded
-// 		err := eenp.ReturnStake(currentHeight, eenAddress, returnedStake)
-// 		if err != nil {
-// 			log.Panicf("Failed to return stake: currentHeight = %v, eenAddress = %v, returnedStake = %v, err = %v",
-// 				currentHeight, eenAddress, returnedStake, err)
-// 		}
+		// TODO: potentially O(m*n) runtime complexity, but the number of stakes on an EEN is bounded
+		err := eenp.ReturnStake(currentHeight, eenAddress, returnedStake)
+		if err != nil {
+			log.Panicf("Failed to return stake: currentHeight = %v, eenAddress = %v, returnedStake = %v, err = %v",
+				currentHeight, eenAddress, returnedStake, err)
+		}
 
-// 		logger.Infof("Stake returned: eenAddress = %v, source = %v, amount = %v",
-// 			eenAddress, returnedStake.Source, returnedStake.Amount)
-// 	}
+		logger.Infof("Stake returned: eenAddress = %v, source = %v, amount = %v",
+			eenAddress, returnedStake.Source, returnedStake.Amount)
+	}
 
-// 	view.RemoveEliteEdgeNodeStakeReturns(currentHeight)
-// }
+	view.RemoveEliteEdgeNodeStakeReturns(currentHeight)
+}
 
 // addSpecialTransactions adds special transactions (e.g. coinbase transaction, slash transaction) to the block
 func (ledger *Ledger) addSpecialTransactions(block *core.Block, view *st.StoreView, rawTxs *[]common.Bytes) {
@@ -778,20 +778,17 @@ func (ledger *Ledger) addCoinbaseTx(view *st.StoreView, proposer *core.Validator
 	}
 
 	var accountRewardMap map[string]types.Coins
-	// ch := ledger.GetCurrentBlock().Height
-	// currentBlock := ledger.GetCurrentBlock()
-	// guardianVotes := currentBlock.GuardianVotes
-	// eliteEdgeNodeVotes := currentBlock.EliteEdgeNodeVotes
+	ch := ledger.GetCurrentBlock().Height
+	currentBlock := ledger.GetCurrentBlock()
+	guardianVotes := currentBlock.GuardianVotes
+	eliteEdgeNodeVotes := currentBlock.EliteEdgeNodeVotes
 
-	// if guardianVotes != nil && ch >= common.HeightEnableTheta2 && common.IsCheckPointHeight(ch) {
-	// 	guardianPool := exec.RetrievePools(ledger, ledger.chain, ledger.db, ch, guardianVotes)
-	// 	// accountRewardMap = exec.CalculateReward(ledger, view, validatorSet, guardianVotes, guardianPool, eliteEdgeNodeVotes, eliteEdgeNodePool)
-	// 	accountRewardMap = exec.CalculateReward(ledger, view, validatorSet, guardianVotes, guardianPool)
-	// } else { // for compatibility with lower versions (e.g. blockHeight < common.HeightEnableValidatorReward)
-	// 	accountRewardMap = exec.CalculateReward(ledger, view, validatorSet, nil, nil)
-	// }
-
-	accountRewardMap = exec.CalculateReward(ledger, view, validatorSet)
+	if guardianVotes != nil && ch >= common.HeightEnableTheta2 && common.IsCheckPointHeight(ch) {
+		guardianPool, eliteEdgeNodePool := exec.RetrievePools(ledger, ledger.chain, ledger.db, ch, guardianVotes, eliteEdgeNodeVotes)
+		accountRewardMap = exec.CalculateReward(ledger, view, validatorSet, guardianVotes, guardianPool, eliteEdgeNodeVotes, eliteEdgeNodePool)
+	} else { // for compatibility with lower versions (e.g. blockHeight < common.HeightEnableValidatorReward)
+		accountRewardMap = exec.CalculateReward(ledger, view, validatorSet, nil, nil, nil, nil)
+	}
 
 	coinbaseTxOutputs := []types.TxOutput{}
 	for accountAddressStr, accountReward := range accountRewardMap {

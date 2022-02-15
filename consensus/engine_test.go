@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/thetatoken/theta/blockchain"
 	"github.com/thetatoken/theta/common"
-	"github.com/thetatoken/theta/core_sidechain"
+	"github.com/thetatoken/theta/core"
 	"github.com/thetatoken/theta/crypto"
 	"github.com/thetatoken/theta/store/database/backend"
 	"github.com/thetatoken/theta/store/kvstore"

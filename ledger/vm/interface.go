@@ -20,7 +20,7 @@ import (
 	"math/big"
 
 	"github.com/thetatoken/theta/common"
-	"github.com/thetatoken/theta/ledger_sidechain/types"
+	"github.com/thetatoken/theta/ledger/types"
 )
 
 // StateDB is an EVM database for full state querying.

@@ -14,7 +14,7 @@ import (
 	"github.com/thetatoken/theta/blockchain"
 	"github.com/thetatoken/theta/common"
 	"github.com/thetatoken/theta/common/util"
-	"github.com/thetatoken/theta/core_sidechain"
+	"github.com/thetatoken/theta/core"
 	"github.com/thetatoken/theta/dispatcher"
 	rp "github.com/thetatoken/theta/report"
 

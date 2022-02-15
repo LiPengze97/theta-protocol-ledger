@@ -5,14 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/thetatoken/theta/consensus_sidechain"
+	"github.com/thetatoken/theta/consensus"
 	"github.com/thetatoken/theta/rlp"
 	"github.com/thetatoken/theta/store/database/backend"
 	"github.com/thetatoken/theta/store/kvstore"
 
-	"github.com/thetatoken/theta/core_sidechain"
+	"github.com/thetatoken/theta/core"
 	"github.com/thetatoken/theta/crypto"
-	"github.com/thetatoken/theta/ledger_sidechain"
+	"github.com/thetatoken/theta/ledger"
 
 	"github.com/thetatoken/theta/common"
 	"github.com/thetatoken/theta/dispatcher"
