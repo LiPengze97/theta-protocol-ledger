@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/thetatoken/theta/blockchain"
-	"github.com/thetatoken/theta/core"
+	"github.com/thetatoken/theta/core_sidechain"
 	"github.com/thetatoken/theta/rlp"
 )
 

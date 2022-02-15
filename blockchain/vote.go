@@ -2,7 +2,7 @@ package blockchain
 
 import (
 	"github.com/thetatoken/theta/common"
-	"github.com/thetatoken/theta/core"
+	"github.com/thetatoken/theta/core_sidechain"
 )
 
 // voteIndexKey constructs the DB key for the given block hash.

@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/thetatoken/theta/common"
-	"github.com/thetatoken/theta/core"
+	"github.com/thetatoken/theta/core_sidechain"
 )
 
 func TestVoteIndex(t *testing.T) {

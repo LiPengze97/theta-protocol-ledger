@@ -15,8 +15,8 @@ import (
 	"github.com/thetatoken/theta/common/math"
 	"github.com/thetatoken/theta/common/pqueue"
 	"github.com/thetatoken/theta/common/result"
-	"github.com/thetatoken/theta/consensus"
-	"github.com/thetatoken/theta/core"
+	"github.com/thetatoken/theta/consensus_sidechain"
+	"github.com/thetatoken/theta/core_sidechain"
 	dp "github.com/thetatoken/theta/dispatcher"
 )
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/thetatoken/theta/core"
+	"github.com/thetatoken/theta/core_sidechain"
 )
 
 func TestBlockchain(t *testing.T) {

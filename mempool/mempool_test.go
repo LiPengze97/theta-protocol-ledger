@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/thetatoken/theta/common"
 	"github.com/thetatoken/theta/common/result"
-	"github.com/thetatoken/theta/core"
+	"github.com/thetatoken/theta/core_sidechain"
 	dp "github.com/thetatoken/theta/dispatcher"
 	p2psim "github.com/thetatoken/theta/p2p/simulation"
 	p2ptypes "github.com/thetatoken/theta/p2p/types"

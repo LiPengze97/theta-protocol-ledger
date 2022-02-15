@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/thetatoken/theta/cmd/thetacli/cmd/utils"
 	"github.com/thetatoken/theta/common"
-	"github.com/thetatoken/theta/ledger/types"
+	"github.com/thetatoken/theta/ledger_sidechain/types"
 	"github.com/thetatoken/theta/rpc"
 	wtypes "github.com/thetatoken/theta/wallet/types"
 

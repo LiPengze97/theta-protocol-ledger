@@ -34,7 +34,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/thetatoken/theta/common"
 	"github.com/thetatoken/theta/crypto"
-	tp "github.com/thetatoken/theta/ledger/types"
+	tp "github.com/thetatoken/theta/ledger_sidechain/types"
 	"github.com/thetatoken/theta/wallet/coldwallet/keystore/trezor"
 	"github.com/thetatoken/theta/wallet/types"
 )

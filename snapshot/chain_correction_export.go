@@ -10,9 +10,9 @@ import (
 
 	"github.com/thetatoken/theta/blockchain"
 	"github.com/thetatoken/theta/common"
-	"github.com/thetatoken/theta/core"
+	"github.com/thetatoken/theta/core_sidechain"
 	"github.com/thetatoken/theta/crypto"
-	"github.com/thetatoken/theta/ledger/types"
+	"github.com/thetatoken/theta/ledger_sidechain/types"
 )
 
 func ExcludeTxs(txs []common.Bytes, exclusionTxMap map[string]bool, chain *blockchain.Chain) (results []common.Bytes) {

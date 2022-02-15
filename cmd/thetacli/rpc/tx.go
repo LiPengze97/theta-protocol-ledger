@@ -11,8 +11,8 @@ import (
 
 	"github.com/thetatoken/theta/cmd/thetacli/cmd/utils"
 	"github.com/thetatoken/theta/common"
-	"github.com/thetatoken/theta/core"
-	"github.com/thetatoken/theta/ledger/types"
+	"github.com/thetatoken/theta/core_sidechain"
+	"github.com/thetatoken/theta/ledger_sidechain/types"
 	trpc "github.com/thetatoken/theta/rpc"
 )
 

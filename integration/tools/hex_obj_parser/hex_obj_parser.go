@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/thetatoken/theta/core"
-	"github.com/thetatoken/theta/ledger/types"
+	"github.com/thetatoken/theta/core_sidechain"
+	"github.com/thetatoken/theta/ledger_sidechain/types"
 	"github.com/thetatoken/theta/rlp"
 )
 

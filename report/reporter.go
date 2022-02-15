@@ -18,8 +18,8 @@ import (
 	"github.com/thetatoken/theta/blockchain"
 	"github.com/thetatoken/theta/common"
 	"github.com/thetatoken/theta/common/util"
-	"github.com/thetatoken/theta/consensus"
-	"github.com/thetatoken/theta/core"
+	"github.com/thetatoken/theta/consensus_sidechain"
+	"github.com/thetatoken/theta/core_sidechain"
 	dp "github.com/thetatoken/theta/dispatcher"
 	"github.com/thetatoken/theta/version"
 )

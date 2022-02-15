@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/thetatoken/theta/blockchain"
-	"github.com/thetatoken/theta/core"
+	"github.com/thetatoken/theta/core_sidechain"
 	"github.com/thetatoken/theta/snapshot"
 	"github.com/thetatoken/theta/store/database/backend"
 	"github.com/thetatoken/theta/store/kvstore"

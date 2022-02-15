@@ -18,7 +18,7 @@ import (
 	"github.com/thetatoken/theta/cmd/thetacli/cmd/utils"
 	"github.com/thetatoken/theta/common"
 	"github.com/thetatoken/theta/common/util"
-	"github.com/thetatoken/theta/core"
+	"github.com/thetatoken/theta/core_sidechain"
 	"github.com/thetatoken/theta/crypto"
 	"github.com/thetatoken/theta/node"
 	msg "github.com/thetatoken/theta/p2p/messenger"
